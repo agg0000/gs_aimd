@@ -7,7 +7,7 @@ import sys
 import numpy as np
 
 import softapi
-from constant import evtoau, mas, amu2au
+from constant import evtoau, mas, amu2au, kb
 
 def center(x, natom, mass):
     mcenter = np.zeros(3)
@@ -22,7 +22,7 @@ def center(x, natom, mass):
 
     return x
     
-def get_vector(ekin, mass, coord, n):
+def get_vector(ekin, temp, mass, coord, n, m):
     ekin *= evtoau
     
     size = coord.shape
@@ -49,8 +49,11 @@ def get_vector(ekin, mass, coord, n):
 
     velc_tot = np.random.normal(size = [n, natom, 3])
 
+    if m:
+        stadev = kb * temp * np.sqrt(1.5 * natom) * np.random.normal(size = nsample)
+
     mom_tot = []
-    for velc in velc_tot:
+    for i, velc in enumerate(velc_tot):
         for i in range(natom):
             velc[i] /= np.sqrt(mass[i])
 
@@ -73,7 +76,8 @@ def get_vector(ekin, mass, coord, n):
         for i in range(natom):
             Ev_tot += mass[i] * np.dot(velc[i], velc[i])
 
-        a = np.sqrt(2 * ekin / Ev_tot)
+        ekin1 = ekin + stadev[i] if m else ekin
+        a = np.sqrt(2 * ekin1 / Ev_tot)
         velc *= a
 
         mom = np.zeros_like(velc)
@@ -106,8 +110,11 @@ theory = fd['theory'] if 'theory' in fd else 'td'
 keyname = fd['keyname'].lower() if 'keyname' in fd else 'i'
 flip = fd['flip'].lower() if 'flip' in fd else 'd'
 
-Ekin = float(fd['ekin']) if 'ekin' in fd else 0.4
 nsample = int(fd['nsample']) if 'nsample' in fd else 200
+micro = int(fd['micro']) if 'micro' in fd else 0
+
+Ekin = float(fd['ekin']) if 'ekin' in fd else 0.4
+temp = float(fd['temp']) if 'temp' in fd else 300
 
 quansoft = softapi.softname(softuse)
 
@@ -115,7 +122,7 @@ pos0, symb = quansoft.getpos(filename, numele)
 coord = np.array(pos0, dtype = float)
 mass = [mas[s] for s in symb]
 
-mom_tot = get_vector(Ekin, mass, coord, nsample)
+mom_tot = get_vector(Ekin, temp, mass, coord, nsample, micro)
 
 for n in range(nsample):
     newname = "{}{}.inf".format(fname, n)
