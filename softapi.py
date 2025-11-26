@@ -1594,10 +1594,6 @@ class BDF():
 				continue
 			
 			elif trans:
-				if passline:
-					passline = False
-					continue
-
 				if tdisf:
 					line += "{}\n".format(newspin)
 					tdisf = False
@@ -1608,15 +1604,19 @@ class BDF():
 					resproot = False
 					passline = True
 
-			elif state != newstate:
 				if passline:
 					passline = False
 					continue
 
+			elif state != newstate:
 				if resproot:
 					line += "{}\n".format(newstate)
 					resproot = False
 					passline = True
+
+				if passline:
+					passline = False
+					continue
 
 			newfile.write(line)
 

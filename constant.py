@@ -2,7 +2,6 @@
 the contant about the program
 '''
 
-kb  = 0.3166813639E-5
 fstoau = 24.188843265e-3
 me = 5.4857990943e-4
 evtoau = 1 / 27.21138386
